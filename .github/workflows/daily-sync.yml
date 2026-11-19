@@ -1,0 +1,35 @@
+name: Daily Bellhaven CRM Sync
+
+# Runs the scraper + matcher every day and opens the review queue with any
+# NEW proposals. Safe to re-run: proposals already decided in
+# state/decisions.json are never re-proposed, and nothing is written to
+# the CRM without a reviewer's approval in the review app.
+
+on:
+  schedule:
+    - cron: "0 13 * * *"   # 13:00 UTC daily (~8:00 AM CT)
+  workflow_dispatch:        # allow manual runs
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Scrape Bellhaven website
+        run: python3 scraper.py
+      - name: Match against CRM and build proposals
+        env:
+          BELLHAVEN_TOKEN: ${{ secrets.BELLHAVEN_TOKEN }}
+          BELLHAVEN_API_BASE: ${{ secrets.BELLHAVEN_API_BASE }}
+        run: python3 matcher.py
+      - name: Upload proposals for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: proposals
+          path: |
+            data/proposals.json
+            data/proposals.csv
+            data/match_report.json
