@@ -59,7 +59,7 @@ def load_env() -> dict:
             if "=" in line and not line.startswith("#"):
                 k, v = line.split("=", 1)
                 env[k.strip()] = v.strip()
-    env.update({k: v for k, v in os.environ.items() if k.startswith("BELLHAVEN_")})
+    env.update({k: v.strip() for k, v in os.environ.items() if k.startswith("BELLHAVEN_")})
     return env
 
 ENV = load_env()
